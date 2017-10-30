@@ -1,0 +1,8 @@
+[package]
+name = "mato"
+version = "0.1.0"
+authors = ["Victor VoxWave Bankowski <victor_bankowski@hotmail.com>"]
+
+[dependencies]
+piston_window = "0.73.0"
+rand = "0.3.17"
