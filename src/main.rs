@@ -35,7 +35,7 @@ impl Game {
     fn new() -> Self {
         let mut rand = rand::thread_rng();
         let range = Range::new(0, 24);
-        Game{
+        Game {
             snake_direction: Direction::Right,
             snake_head: (12,12),
             snake_body: VecDeque::new(),
@@ -116,6 +116,7 @@ fn main() {
                 _ => wanted_direction,
             };
         }
+     
         window.draw_2d(&e, |c, g| {
             clear([0.5, 0.5, 0.5, 1.0], g);
             let (head_x, head_y) = game.snake_head;
@@ -139,6 +140,5 @@ fn main() {
             game.tick();
             last_tick = Instant::now()
         }
-        //game.tick();
     }
 }
