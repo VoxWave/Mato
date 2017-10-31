@@ -82,6 +82,7 @@ impl Game {
                 break;
             }
         }
+     
         if self.running {
             if *sh_x == self.apple.0 && *sh_y == self.apple.1 {
                 self.apple_eaten = true;
