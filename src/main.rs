@@ -35,10 +35,12 @@ impl Game {
     fn new() -> Self {
         let mut rand = rand::thread_rng();
         let range = Range::new(0, 24);
+        let mut snake_body = VecDeque::new();
+        snake_body.push_front((11,12));
         Game {
             snake_direction: Direction::Right,
             snake_head: (12,12),
-            snake_body: VecDeque::new(),
+            snake_body: snake_body,
             apple: (range.ind_sample(&mut rand), range.ind_sample(&mut rand)),
             apple_eaten: false,
             running: true,
@@ -46,6 +48,19 @@ impl Game {
             ticks: 0,
             score: 0,
         }
+    }
+
+    fn reset(&mut self) {
+        self.score = 0;
+        self.ticks = 0;
+        self.snake_head =  (12,12);
+        self.snake_body.clear();
+        self.snake_body.push_front((11,12));
+        self.snake_direction = Direction::Right;
+        self.apple_eaten = false;
+        self.running = true;
+        let mut rand = rand::thread_rng();
+        self.apple = (self.range.ind_sample(&mut rand), self.range.ind_sample(&mut rand));
     }
 
     fn tick(&mut self) {
@@ -95,6 +110,7 @@ impl Game {
 }
 
 fn main() {
+    use Direction::*;
     println!("Starting game!");
     let mut window: PistonWindow =
         WindowSettings::new("Mato!", (500, 500))
@@ -107,7 +123,6 @@ fn main() {
     let mut wanted_direction = game.snake_direction;
     while let Some(e) = window.next() {
         if let &Input(Button(ButtonArgs { button: Keyboard(ref k), state: Press, ..})) = &e {
-            use Direction::*;
             wanted_direction = match *k {
                 Key::W => Up,
                 Key::A => Left,
@@ -115,28 +130,44 @@ fn main() {
                 Key::D => Right,
                 _ => wanted_direction,
             };
+            match *k {
+                Key::Return | Key::R => {
+                    game.reset();
+                },
+                _ => {},
+            }
         }
      
         window.draw_2d(&e, |c, g| {
             clear([0.5, 0.5, 0.5, 1.0], g);
             let (head_x, head_y) = game.snake_head;
             rectangle([0.0, 0.5, 0.0, 1.0], // green
-                      [head_x as f64 * 20., 500. - head_y as f64 * 20., 20.0, 20.0],
+                      [head_x as f64 * 20., 500. - (head_y as f64 + 1.) * 20., 20.0, 20.0],
                       c.transform, g);
             for &(x, y) in &game.snake_body {
                 rectangle([0.0, 0.4, 0.0, 1.0], // less green
-                      [x as f64 * 20., 500. - y as f64 * 20., 20.0, 20.0],
+                      [x as f64 * 20., 500. - (y as f64 + 1.) * 20., 20.0, 20.0],
                       c.transform, g);
             }
             let (apple_x, apple_y) = game.apple;
             rectangle([1.0, 0.0, 0.0, 1.0], // red
-                      [apple_x as f64 * 20., 500. - apple_y as f64 * 20., 20.0, 20.0],
+                      [apple_x as f64 * 20., 500. - (apple_y as f64 + 1.) * 20., 20.0, 20.0],
                       c.transform, g);
         });
         
-        let speedup = (game.ticks as f32 + 1.).log2() * 100.;
-        if last_tick.elapsed() > Duration::from_millis((1000 + game.score*10)-speedup as u64) {
-            game.snake_direction = wanted_direction;
+        let speedup = ((game.ticks as f32 + 1.).log2() * 100.) as u64;
+        let slowdown = 1000 + game.score*10;
+        let tick_duration = if slowdown < speedup {
+            0
+        } else {
+            slowdown - speedup
+        };
+
+        if last_tick.elapsed() > Duration::from_millis(tick_duration) && game.running {
+            game.snake_direction = match (game.snake_direction, wanted_direction) {
+                (Up, Down) | (Down, Up) | (Left, Right) | (Right, Left) => game.snake_direction,
+                _ => wanted_direction,
+            };
             game.tick();
             last_tick = Instant::now()
         }
