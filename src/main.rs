@@ -150,7 +150,7 @@ fn main() {
     // Luodaan peli.
     let mut game = Game::new();
 
-    // 
+    // Viimeisin tick alustetaan.
     let mut last_tick = Instant::now();
 
     // Syötteiden käsittely.
